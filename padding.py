@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3
 
 from Crypto import Random
 from Crypto.Cipher import DES
@@ -86,16 +86,24 @@ print(gh.bstr2hex(encrypted_bstr).replace(' ', ''))
 print(' ' * 16 + gh.bstr2hex(decrypted_bstr).replace(' ', ''))
 print(decrypted_message)
 
-"""
 # Padding test code
 ansix = b"In ANSI X9.23, between 1 and 8 bytes are always added as padding."
 for i in range(65):
     s = ansix[:i]
     print("{:2d} {}".format(i, gh.bstr2hex(pad_ansix923(s, 8)).replace(" ","")))
+    
+    # Try removing faulty padding
+    try:
+        print("{:2d} {}".format(i, gh.bstr2hex(remove_pkcs7(pad_ansix923(s, 8),\
+            8)).replace(" ","")))
+    except InvalidPadding as e:
+        print(e)
+
 
 ansix = b"The padding can be removed unambiguously since all input is padded"
 for i in range(66):
     s = ansix[:i]
     print("{:2d} {}".format(i, gh.bstr2hex(pad_pkcs7(s, 8)).replace(" ","")))
+    print("{:2d} {}".format(i, gh.bstr2hex(remove_pkcs7(pad_pkcs7(s, 8), 8)).\
+        replace(" ","")))
 
-"""
