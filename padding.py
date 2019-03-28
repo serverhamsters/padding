@@ -43,7 +43,6 @@ def remove_pkcs7(message_bstr, block_size):
     
     return message_bstr[:-last_byte]
 
-
 def encrypt_DES(key, message_bstr, iv=None, padding_f=pad_pkcs7):
     '''
     Encryptes with DES CBC with PKCS#7 padding.
@@ -66,7 +65,7 @@ def decrypted_DES(key, encrypted_bstr):
     encrypted_msg = encrypted_bstr[DES.block_size:]
     cipher_des = DES.new(key, DES.MODE_CBC, iv)
     decrypted_message = cipher_des.decrypt(encrypted_msg)
-
+    print(gh.bstr2hex(decrypted_message))
     return remove_pkcs7(decrypted_message, DES.block_size)
 
 
@@ -85,7 +84,7 @@ print(' ' * 16 + gh.bstr2hex(message_bstr).replace(' ', ''))
 print(gh.bstr2hex(encrypted_bstr).replace(' ', ''))
 print(' ' * 16 + gh.bstr2hex(decrypted_bstr).replace(' ', ''))
 print(decrypted_message)
-
+"""
 # Padding test code
 ansix = b"In ANSI X9.23, between 1 and 8 bytes are always added as padding."
 for i in range(65):
@@ -106,4 +105,44 @@ for i in range(66):
     print("{:2d} {}".format(i, gh.bstr2hex(pad_pkcs7(s, 8)).replace(" ","")))
     print("{:2d} {}".format(i, gh.bstr2hex(remove_pkcs7(pad_pkcs7(s, 8), 8)).\
         replace(" ","")))
+"""
+s = b"The padding can be removed unambiguously since all input is padded"[:5]
+print("{}".format(gh.bstr2hex(pad_pkcs7(s, 8)).replace(" ","")))
+print("{}".format(gh.bstr2hex(remove_pkcs7(pad_pkcs7(s, 8), 8)).\
+    replace(" ","")))
 
+encrypted = encrypt_DES(key, s)
+print(encrypted)
+
+def oracle(encrypted):
+    '''
+    returns whether the padding is valid or not.
+    '''
+    global key
+    try:
+        decrypted_DES(key, encrypted)
+        return True
+    except InvalidPadding as e:
+        #print(e)
+        return False
+
+print(oracle(encrypted))
+modified_enc = encrypted
+
+for i in range(1, 0xFF):
+    modified_enc = encrypted[:7] + bytes([encrypted[7] ^ i]) + encrypted[8:]
+    is_valid_pad = oracle(modified_enc)
+    print(gh.bstr2hex(modified_enc))
+    print("Last byte 0x{:02X} {:08b}, xor 0x{:02X}h {:08b}, valid pad: {}".format(
+        modified_enc[7],
+        modified_enc[7],
+        i,
+        i,
+        is_valid_pad
+    ))
+    if (is_valid_pad):
+        # calculate plain text
+        plain_byte = i ^ 0x01
+        print("Plain byte: 0x{:02x}".format(plain_byte))
+        break
+    
