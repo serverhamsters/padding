@@ -133,7 +133,7 @@ for i in range(1, 0xFF):
     modified_enc = encrypted[:7] + bytes([encrypted[7] ^ i]) + encrypted[8:]
     is_valid_pad = oracle(modified_enc)
     print(gh.bstr2hex(modified_enc))
-    print("Last byte 0x{:02X} {:08b}, xor 0x{:02X}h {:08b}, valid pad: {}".format(
+    print("8th byte 0x{:02X} {:08b}, xor 0x{:02X} {:08b}, valid pad: {}".format(
         modified_enc[7],
         modified_enc[7],
         i,
@@ -142,7 +142,70 @@ for i in range(1, 0xFF):
     ))
     if (is_valid_pad):
         # calculate plain text
+        last_xor_val = i
         plain_byte = i ^ 0x01
-        print("Plain byte: 0x{:02x}".format(plain_byte))
+        print("Plain byte: 0x{:02x} {:08b}".format(plain_byte, plain_byte))
+        break
+
+# Possible optimization
+# If this is the last block, and we know '03' is the last byte then we also
+# know that the last 3 bytes are '03 03 03'. We could skip those if we wanted.
+found_bytes = list()
+found_bytes.append(plain_byte)
+
+for i in range(1, 0xFF):
+    modified_enc = encrypted[:6] + bytes([encrypted[6] ^ i]) + bytes([encrypted[7] ^ 0x01]) + encrypted[8:]
+    is_valid_pad = oracle(modified_enc)
+    print(gh.bstr2hex(modified_enc))
+    print("8th modified byte 0x{:02X} {:08b}, Original: 0x{:02X} {:08b}".format(
+        modified_enc[7],
+        modified_enc[7],
+        encrypted[7],
+        encrypted[7],
+    ))
+    print("7th byte 0x{:02X} {:08b}, xor 0x{:02X} {:08b}, valid pad: {}".format(
+        modified_enc[6],
+        modified_enc[6],
+        i,
+        i,
+        is_valid_pad
+    ))
+    if (is_valid_pad):
+        # calculate plain text
+        plain_byte = i ^ 0x02
+        print("Last 2 bytes: 0x{:02X} 0x{:02X}".format(plain_byte, found_bytes[0]))
         break
     
+found_bytes.append(plain_byte)
+
+for i in range(0, 0xFF):
+    modified_enc = encrypted[:5] + bytes([encrypted[5] ^ i]) + \
+        bytes([encrypted[6] ^ 0x00]) +  \
+        bytes([encrypted[7] ^ 0x00]) + encrypted[8:]
+    is_valid_pad = oracle(modified_enc)
+    print(gh.bstr2hex(modified_enc))
+    print("8th modified byte 0x{:02X} {:08b}, Original: 0x{:02X} {:08b}".format(
+        modified_enc[7],
+        modified_enc[7],
+        encrypted[7],
+        encrypted[7],
+    ))
+    print("7th byte 0x{:02X} {:08b}, Original: 0x{:02X} {:08b}".format(
+        modified_enc[6],
+        modified_enc[6],
+        encrypted[6],
+        encrypted[6]
+    ))
+    print("6th byte 0x{:02X} {:08b}, xor 0x{:02X} {:08b}, valid pad: {}".format(
+        modified_enc[5],
+        modified_enc[5],
+        i,
+        i,
+        is_valid_pad
+    ))
+    if (is_valid_pad):
+        # calculate plain text
+        plain_byte = i ^ 0x03
+        print("Last 3 bytes: 0x{:02X} 0x{:02X} 0x{:02X}".format(plain_byte, \
+            found_bytes[1], found_bytes[0]))
+        break
